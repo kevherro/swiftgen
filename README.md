@@ -1,4 +1,5 @@
 [![Github Action CI](https://github.com/kevherro/swiftgen/workflows/ci/badge.svg)](https://github.com/kevherro/swiftgen/actions)
+[![Codecov](https://codecov.io/gh/kevherro/swiftgen/graph/badge.svg)](https://codecov.io/gh/kevherro/swiftgen)
 [![Go Reference](https://pkg.go.dev/badge/github.com/kevherro/swiftgen.svg)](https://pkg.go.dev/github.com/kevherro/swiftgen)
 
 # Introduction
