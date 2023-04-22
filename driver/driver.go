@@ -12,18 +12,13 @@
 // The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
 
-package main
+// Package driver provides an external entrypoint to the swiftgen driver.
+package driver
 
 import (
-	"fmt"
-	"os"
-
-	"github.com/kevherro/swiftgen/driver"
+	internalDriver "github.com/kevherro/swiftgen/internal/driver"
 )
 
-func main() {
-	if err := driver.SwiftGen(); err != nil {
-		fmt.Printf("unable to generate code: %v", err)
-		os.Exit(1)
-	}
+func SwiftGen() error {
+	return internalDriver.SwiftGen()
 }

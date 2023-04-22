@@ -12,18 +12,18 @@
 // The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
 
-package main
+// Package plugin ...
+package plugin
 
-import (
-	"fmt"
-	"os"
+import "io"
 
-	"github.com/kevherro/swiftgen/driver"
-)
+// Options groups all the optional plugins into swiftgen.
+type Options struct {
+	Writer Writer
+}
 
-func main() {
-	if err := driver.SwiftGen(); err != nil {
-		fmt.Printf("unable to generate code: %v", err)
-		os.Exit(1)
-	}
+// Writer provides a mechanism to write data under a certain name,
+// typically a file name.
+type Writer interface {
+	Open(name string) (io.WriteCloser, error)
 }

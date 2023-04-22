@@ -12,18 +12,14 @@
 // The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
 
-package main
+// Package driver implements the core swiftgen functionality.
+package driver
 
-import (
-	"fmt"
-	"os"
+import "github.com/kevherro/swiftgen/internal/codegen"
 
-	"github.com/kevherro/swiftgen/driver"
-)
-
-func main() {
-	if err := driver.SwiftGen(); err != nil {
-		fmt.Printf("unable to generate code: %v", err)
-		os.Exit(1)
+func SwiftGen() error {
+	if err := codegen.Generate(); err != nil {
+		return err
 	}
+	return nil
 }

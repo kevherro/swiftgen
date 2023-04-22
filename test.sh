@@ -31,8 +31,7 @@ go test -v "$PKG"
 for d in $PKG; do
   go test -race -coverprofile=profile.out -covermode=$MODE "$d"
   if [ -f profile.out ]; then
-    # shellcheck disable=SC2002
-    cat profile.out | grep -v "^mode: " >> coverage.txt
+    grep -vh "^mode: " profile.out >> coverage.txt
     rm profile.out
   fi
 done
