@@ -1,3 +1,6 @@
+[![Github Action CI](https://github.com/kevherro/swiftgen/workflows/ci/badge.svg)](https://github.com/kevherro/swiftgen/actions)
+[![Go Reference](https://pkg.go.dev/badge/github.com/kevherro/swiftgen.svg)](https://pkg.go.dev/github.com/kevherro/swiftgen)
+
 # Introduction
 
 Are you over feeling the pain of manually updating your Swift models
