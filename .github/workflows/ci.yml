@@ -91,7 +91,7 @@ jobs:
           go get -d .
           go test -v ./...
 
-      - name: Code coverage
+      - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         with:
           file: ./coverage.txt
@@ -152,7 +152,7 @@ jobs:
           go get -d .
           go test -v ./...
 
-      - name: Code coverage
+      - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         with:
           file: ./coverage.txt
