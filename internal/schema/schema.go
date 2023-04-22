@@ -58,6 +58,21 @@ func swiftType(jsonType, format string) string {
 	}
 }
 
+// convertToPascalCase converts an input string in snake_case or kebab-case
+// to PascalCase. It handles dashes and underscores as word separators.
+func convertToPascalCase(input string) string {
+	input = strings.Replace(input, "-", "_", -1)
+	words := strings.Split(input, "_")
+
+	// Convert each word to TitleCase using the title caser.
+	title := cases.Title(language.English)
+	for i, word := range words {
+		words[i] = title.String(word)
+	}
+
+	return strings.Join(words, "")
+}
+
 func (g *JSONSchemaToSwiftCodeGenerator) Generate() string {
 	var code strings.Builder
 
@@ -67,7 +82,7 @@ func (g *JSONSchemaToSwiftCodeGenerator) Generate() string {
 
 	// Generate properties.
 	for propertyName, property := range g.Schema.Properties {
-		swiftPropertyName := cases.Title(language.English).String(propertyName)
+		swiftPropertyName := convertToPascalCase(propertyName)
 		swiftPropertyType := swiftType(property.Type, property.Format)
 
 		isRequired := false

@@ -26,7 +26,7 @@ fi
 # Packages that have any tests.
 PKG=$(go list -f '{{if .TestGoFiles}}{{.ImportPath}}{{end}}' ./...)
 
-go test -v "$PKG"
+go test -v $PKG
 
 for d in $PKG; do
   go test -race -coverprofile=profile.out -covermode=$MODE "$d"
