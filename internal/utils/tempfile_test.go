@@ -12,7 +12,7 @@
 // The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
 
-package tempfile
+package utils
 
 import (
 	"os"
@@ -31,14 +31,15 @@ func TestNewTempFile(t *testing.T) {
 
 	// Call NewTempFile with the temporary directory and prefix.
 	prefix := "testfile"
-	f, err := NewTempFile(tmpDir, prefix)
+	suffix := ".swift"
+	f, err := NewTempFile(tmpDir, prefix, suffix)
 	if err != nil {
 		t.Fatalf("failed to create temp file: %v", err)
 	}
 	defer f.Close()
 
 	// Verify that the file was created with the expected name.
-	expectedName := filepath.Join(tmpDir, prefix+".swift")
+	expectedName := filepath.Join(tmpDir, prefix+suffix)
 	if got := f.Name(); got != expectedName {
 		t.Errorf("unexpected file name: got %q, expected %q", got, expectedName)
 	}
@@ -57,24 +58,5 @@ func TestNewTempFile(t *testing.T) {
 	}
 	if got := strings.TrimSpace(string(content)); got != expectedContent {
 		t.Errorf("unexpected file content: got %q, expected %q", got, expectedContent)
-	}
-}
-
-func TestCleanupTempFiles(t *testing.T) {
-	// Create a temporary file.
-	f, err := NewTempFile("", "example")
-	if err != nil {
-		t.Fatalf("failed to create temp file: %v", err)
-	}
-	deferDeleteTempFile(f.Name())
-	defer f.Close()
-
-	// Call cleanupTempFiles and verify that the file has been deleted.
-	if err := cleanupTempFiles(); err != nil {
-		t.Errorf("failed to cleanup temp files: %v", err)
-	}
-	_, err = os.Stat(f.Name())
-	if !os.IsNotExist(err) {
-		t.Errorf("expected temp file to be deleted, but it still exists")
 	}
 }

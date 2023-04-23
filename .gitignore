@@ -9,6 +9,9 @@ swiftgen
 # Test binary, build with `go test -c`
 *.test
 
+# JSON artifacts
+*.json
+
 # Coverage data
 coverage.txt
 
