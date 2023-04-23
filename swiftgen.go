@@ -12,6 +12,7 @@
 // The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
 
+// swiftgen is a tool for generating Swift code based on JSON schema data.
 package main
 
 import (
@@ -23,7 +24,7 @@ import (
 
 func main() {
 	if err := driver.SwiftGen(); err != nil {
-		fmt.Printf("unable to generate code: %v", err)
-		os.Exit(1)
+		fmt.Fprintf(os.Stderr, "swiftgen: %v", err)
+		os.Exit(2)
 	}
 }

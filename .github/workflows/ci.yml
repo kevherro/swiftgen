@@ -78,7 +78,7 @@ jobs:
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         with:
-          file: ${{ env.WORKING_DIR }}/coverage.txt
+          file: coverage.txt
 
   test-linux:
     runs-on: ${{ matrix.os }}
@@ -138,4 +138,4 @@ jobs:
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         with:
-          file: ${{ env.WORKING_DIR }}/coverage.txt
+          file: coverage.txt

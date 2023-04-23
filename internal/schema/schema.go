@@ -73,6 +73,7 @@ func convertToPascalCase(in string) string {
 	return strings.Join(words, "")
 }
 
+// Generate generates Swift struct definitions from g.
 func (g *JSONSchemaToSwiftCodeGenerator) Generate() string {
 	var b strings.Builder
 
