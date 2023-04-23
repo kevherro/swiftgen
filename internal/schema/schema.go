@@ -40,7 +40,7 @@ type JSONSchemaToSwiftCodeGenerator struct {
 	Schema JSONSchema
 }
 
-func swiftType(jsonType, format string) string {
+func swiftType(jsonType string) string {
 	switch jsonType {
 	case "string":
 		return "String"
@@ -60,9 +60,9 @@ func swiftType(jsonType, format string) string {
 
 // convertToPascalCase converts an input string in snake_case or kebab-case
 // to PascalCase. It handles dashes and underscores as word separators.
-func convertToPascalCase(input string) string {
-	input = strings.Replace(input, "-", "_", -1)
-	words := strings.Split(input, "_")
+func convertToPascalCase(in string) string {
+	in = strings.Replace(in, "-", "_", -1)
+	words := strings.Split(in, "_")
 
 	// Convert each word to TitleCase using the title caser.
 	title := cases.Title(language.English)
@@ -74,34 +74,34 @@ func convertToPascalCase(input string) string {
 }
 
 func (g *JSONSchemaToSwiftCodeGenerator) Generate() string {
-	var code strings.Builder
+	var b strings.Builder
 
 	// Generate the struct definition.
-	structName := g.Schema.Title
-	code.WriteString(fmt.Sprintf("struct %s: Codable {\n", structName))
+	sName := g.Schema.Title
+	b.WriteString(fmt.Sprintf("struct %s: Codable {\n", sName))
 
 	// Generate properties.
-	for propertyName, property := range g.Schema.Properties {
-		swiftPropertyName := convertToPascalCase(propertyName)
-		swiftPropertyType := swiftType(property.Type, property.Format)
+	for pName, p := range g.Schema.Properties {
+		n := convertToPascalCase(pName)
+		t := swiftType(p.Type)
 
 		isRequired := false
 		for _, requiredProperty := range g.Schema.Required {
-			if requiredProperty == propertyName {
+			if requiredProperty == pName {
 				isRequired = true
 				break
 			}
 		}
 
 		if isRequired {
-			code.WriteString(fmt.Sprintf("\tlet %s: %s\n", swiftPropertyName, swiftPropertyType))
+			b.WriteString(fmt.Sprintf("\tlet %s: %s\n", n, t))
 		} else {
-			code.WriteString(fmt.Sprintf("\tlet %s: %s?\n", swiftPropertyName, swiftPropertyType))
+			b.WriteString(fmt.Sprintf("\tlet %s: %s?\n", n, t))
 		}
 	}
 
 	// Close the struct.
-	code.WriteString("}\n")
+	b.WriteString("}\n")
 
-	return code.String()
+	return b.String()
 }

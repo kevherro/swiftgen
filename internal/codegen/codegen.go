@@ -17,27 +17,35 @@ package codegen
 
 import (
 	"encoding/json"
-	"errors"
+	"flag"
+	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/kevherro/swiftgen/internal/schema"
-	"github.com/kevherro/swiftgen/internal/tempfile"
+	"github.com/kevherro/swiftgen/internal/utils"
 )
 
 func Generate() error {
-	args := os.Args
-	if len(args) != 2 { // Executable + input file
-		return errors.New("usage: ./swiftgen <source>")
+	srcFlag := flag.String("src", "", "Path to JSON schema file")
+	destFlag := flag.String("dest", "", "Path to write location")
+
+	flag.Parse()
+
+	if *srcFlag == "" {
+		flag.Usage()
+		err := fmt.Errorf("codegen: --src flag value not provided")
+		return err
 	}
 
-	source, err := os.Open(args[1])
+	src, err := os.Open(*srcFlag)
 	if err != nil {
 		return err
 	}
-	defer source.Close()
+	defer src.Close()
 
-	byteValue, _ := io.ReadAll(source)
+	byteValue, _ := io.ReadAll(src)
 
 	var jsonSchema schema.JSONSchema
 	if err = json.Unmarshal(byteValue, &jsonSchema); err != nil {
@@ -46,12 +54,13 @@ func Generate() error {
 
 	generator := schema.JSONSchemaToSwiftCodeGenerator{Schema: jsonSchema}
 
-	wd, err := os.Getwd()
-	if err != nil {
+	fParts := utils.SplitBefore(*destFlag, ".")
+	if len(fParts) != 2 {
+		err := fmt.Errorf("codegen: unable to parse dest flag: %v", *destFlag)
 		return err
 	}
 
-	out, err := tempfile.NewTempFile(wd, generator.Schema.Title)
+	out, err := utils.NewTempFile(filepath.Dir(*destFlag), fParts[0], fParts[1])
 	if err != nil {
 		return err
 	}
@@ -61,6 +70,5 @@ func Generate() error {
 		return err
 	}
 
-	// Success!
 	return nil
 }

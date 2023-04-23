@@ -22,21 +22,20 @@ import (
 func TestSwiftType(t *testing.T) {
 	tests := []struct {
 		jsonType string
-		format   string
 		expected string
 	}{
-		{"string", "", "String"},
-		{"integer", "", "Int"},
-		{"number", "", "Double"},
-		{"boolean", "", "Bool"},
-		{"array", "", "[String]"},
-		{"unknown", "", "Any"},
+		{"string", "String"},
+		{"integer", "Int"},
+		{"number", "Double"},
+		{"boolean", "Bool"},
+		{"array", "[String]"},
+		{"unknown", "Any"},
 	}
 
 	for _, test := range tests {
-		result := swiftType(test.jsonType, test.format)
+		result := swiftType(test.jsonType)
 		if result != test.expected {
-			t.Errorf("swiftType(%s, %s) = %s; want %s", test.jsonType, test.format, result, test.expected)
+			t.Errorf("swiftType(%s) = %s; want %s", test.jsonType, result, test.expected)
 		}
 	}
 }
