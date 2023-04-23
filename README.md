@@ -28,14 +28,13 @@ The binary will be installed in `$GOPATH/bin` (`$HOME/go/bin` by default).
 
 # Basic usage
 
-swiftgen can read a JSON schema file (`[json_schema_file].json`).
-Specify the input file in the command line. It writes the Swift code (`[generated_swift_code].swift`)
-to your current working directory.
+swiftgen can read a JSON schema file and convert it to Swift struct definitions.
 
 ### Generate Swift code based on a JSON schema file
 
 ```
-% swiftgen [json_schema_file]
+% swiftgen --src <json_schema_file> --dest [result_write_location]
 Where
-    json_schema_file: Local path to the JSON schema file.
+    json_schema_file: Path to the JSON schema file. Required.
+    result_write_location: Path to the write location. Optional.
 ```
