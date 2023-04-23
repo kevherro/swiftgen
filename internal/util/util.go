@@ -12,8 +12,9 @@
 // The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
 
-// Package utils implements methods used throughout swiftgen.
-package utils
+// Package util provides a set of common functions that can be used across
+// different packages.
+package util
 
 import "strings"
 

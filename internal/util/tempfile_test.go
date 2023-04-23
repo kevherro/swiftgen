@@ -12,7 +12,7 @@
 // The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
 
-package utils
+package util
 
 import (
 	"os"
@@ -21,25 +21,24 @@ import (
 	"testing"
 )
 
-func TestNewTempFile(t *testing.T) {
-	// Create a temporary directory.
-	tmpDir, err := os.MkdirTemp("", "example")
-	if err != nil {
-		t.Fatalf("failed to create temp dir: %v", err)
-	}
-	defer os.RemoveAll(tmpDir)
+const (
+	prefix = "testfile"
+	suffix = ".swift"
+)
 
-	// Call NewTempFile with the temporary directory and prefix.
-	prefix := "testfile"
-	suffix := ".swift"
-	f, err := NewTempFile(tmpDir, prefix, suffix)
+func TestNewTempFile(t *testing.T) {
+	t.Cleanup(func() {
+		os.Remove(os.TempDir() + prefix + suffix)
+	})
+
+	f, err := NewTempFile(os.TempDir(), prefix, suffix)
 	if err != nil {
 		t.Fatalf("failed to create temp file: %v", err)
 	}
 	defer f.Close()
 
 	// Verify that the file was created with the expected name.
-	expectedName := filepath.Join(tmpDir, prefix+suffix)
+	expectedName := filepath.Join(os.TempDir(), prefix+suffix)
 	if got := f.Name(); got != expectedName {
 		t.Errorf("unexpected file name: got %q, expected %q", got, expectedName)
 	}

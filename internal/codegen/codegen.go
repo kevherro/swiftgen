@@ -24,7 +24,7 @@ import (
 	"path/filepath"
 
 	"github.com/kevherro/swiftgen/internal/schema"
-	"github.com/kevherro/swiftgen/internal/utils"
+	"github.com/kevherro/swiftgen/internal/util"
 )
 
 func Generate() error {
@@ -54,13 +54,13 @@ func Generate() error {
 
 	generator := schema.JSONSchemaToSwiftCodeGenerator{Schema: jsonSchema}
 
-	fParts := utils.SplitBefore(*destFlag, ".")
+	fParts := util.SplitBefore(*destFlag, ".")
 	if len(fParts) != 2 {
 		err := fmt.Errorf("codegen: unable to parse dest flag: %v", *destFlag)
 		return err
 	}
 
-	out, err := utils.NewTempFile(filepath.Dir(*destFlag), fParts[0], fParts[1])
+	out, err := util.NewTempFile(filepath.Dir(*destFlag), fParts[0], fParts[1])
 	if err != nil {
 		return err
 	}

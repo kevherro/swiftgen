@@ -58,9 +58,8 @@ jobs:
         run: |
           # Do not let tools interfere with the main module's go.mod.
           cd && go mod init tools
-          # TODO: Update to a specific version when https://github.com/dominikh/go-tools/issues/1362 is fixed.
-          go install honnef.co/go/tools/cmd/staticcheck@master
-          go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.51.0
+          go install honnef.co/go/tools/cmd/staticcheck@v0.4.3
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.52.2
           # Add PATH for installed tools.
           echo "$GOPATH/bin:$PATH" >> $GITHUB_PATH
 
@@ -119,9 +118,8 @@ jobs:
         run: |
           # Do not let tools interfere with the main module's go.mod.
           cd && go mod init tools
-          # TODO: Update to a specific version when https://github.com/dominikh/go-tools/issues/1362 is fixed.
-          go install honnef.co/go/tools/cmd/staticcheck@master
-          go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.51.0
+          go install honnef.co/go/tools/cmd/staticcheck@v0.4.3
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.52.2
           # Add PATH for installed tools.
           echo "$GOPATH/bin:$PATH" >> $GITHUB_PATH
 
