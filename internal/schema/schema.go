@@ -16,7 +16,10 @@
 package schema
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
+	"os"
 	"strings"
 
 	"golang.org/x/text/cases"
@@ -27,6 +30,7 @@ type JSONSchemaProperty struct {
 	Type    string `json:"type"`
 	Format  string `json:"format,omitempty"`
 	Default string `json:"default,omitempty"`
+	Ref     string `json:"$ref,omitempty"`
 }
 
 type JSONSchema struct {
@@ -40,6 +44,83 @@ type JSONSchemaToSwiftCodeGenerator struct {
 	Schema JSONSchema
 }
 
+// Generate recursively processes referenced schemas.
+func (g *JSONSchemaToSwiftCodeGenerator) Generate() (string, error) {
+	var b strings.Builder
+	err := g.generate(g.Schema, &b)
+	if err != nil {
+		return "", err
+	}
+	return b.String(), nil
+}
+
+func (g *JSONSchemaToSwiftCodeGenerator) generate(s JSONSchema, b *strings.Builder) error {
+	// Open the struct.
+	b.WriteString(fmt.Sprintf("struct %s: Codable {\n", s.Title))
+
+	// Generate properties without $ref.
+	for n, p := range s.Properties {
+		if p.Ref == "" {
+			name := convertToPascalCase(n)
+			t := swiftType(p.Type)
+
+			req := false
+			for _, rp := range s.Required {
+				if rp == name {
+					req = true
+					break
+				}
+			}
+
+			if req {
+				b.WriteString(fmt.Sprintf("\tlet %s: %s\n", name, t))
+			} else {
+				b.WriteString(fmt.Sprintf("\tlet %s: %s?\n", name, t))
+			}
+		}
+	}
+
+	// Generate properties with $ref and their respective structs.
+	for n, p := range s.Properties {
+		if p.Ref != "" {
+			// The schema for p is located in file p.Ref.
+			s, err := loadJSONSchemaFromFile(p.Ref)
+			if err != nil {
+				return err
+			}
+
+			err = g.generate(s, b)
+			if err != nil {
+				return err
+			}
+
+			name := convertToPascalCase(n)
+			b.WriteString(fmt.Sprintf("\tlet %s: %s\n", name, s.Title))
+		}
+	}
+
+	// Close the struct.
+	b.WriteString("}\n")
+
+	return nil
+}
+
+// convertToPascalCase converts an input string in snake_case or kebab-case
+// to PascalCase. It handles dashes and underscores as word separators.
+func convertToPascalCase(in string) string {
+	in = strings.Replace(in, "-", "_", -1)
+	words := strings.Split(in, "_")
+
+	// Convert each word to TitleCase using the title caser.
+	title := cases.Title(language.English)
+	for i, w := range words {
+		words[i] = title.String(w)
+	}
+
+	return strings.Join(words, "")
+}
+
+// swiftType returns the Swift type for the jsonType.
 func swiftType(jsonType string) string {
 	switch jsonType {
 	case "string":
@@ -52,57 +133,28 @@ func swiftType(jsonType string) string {
 		return "Bool"
 	case "array":
 		// Assuming the array element type is known, e.g., String.
-		return "[String]"
+		return "[String]" // TODO: don't assume this!
 	default:
 		return "Any"
 	}
 }
 
-// convertToPascalCase converts an input string in snake_case or kebab-case
-// to PascalCase. It handles dashes and underscores as word separators.
-func convertToPascalCase(in string) string {
-	in = strings.Replace(in, "-", "_", -1)
-	words := strings.Split(in, "_")
+// loadJSONSchemaFromFile loads JSON schema data from name. In case of an error,
+// an empty JSONSchema is returned.
+func loadJSONSchemaFromFile(name string) (JSONSchema, error) {
+	var s JSONSchema
 
-	// Convert each word to TitleCase using the title caser.
-	title := cases.Title(language.English)
-	for i, word := range words {
-		words[i] = title.String(word)
+	f, err := os.Open(name)
+	if err != nil {
+		return s, err
 	}
+	defer f.Close()
 
-	return strings.Join(words, "")
-}
-
-// Generate generates Swift struct definitions from g.
-func (g *JSONSchemaToSwiftCodeGenerator) Generate() string {
-	var b strings.Builder
-
-	// Generate the struct definition.
-	sName := g.Schema.Title
-	b.WriteString(fmt.Sprintf("struct %s: Codable {\n", sName))
-
-	// Generate properties.
-	for pName, p := range g.Schema.Properties {
-		n := convertToPascalCase(pName)
-		t := swiftType(p.Type)
-
-		isRequired := false
-		for _, requiredProperty := range g.Schema.Required {
-			if requiredProperty == pName {
-				isRequired = true
-				break
-			}
-		}
-
-		if isRequired {
-			b.WriteString(fmt.Sprintf("\tlet %s: %s\n", n, t))
-		} else {
-			b.WriteString(fmt.Sprintf("\tlet %s: %s?\n", n, t))
-		}
+	b, err := io.ReadAll(f)
+	if err != nil {
+		return s, err
 	}
+	err = json.Unmarshal(b, &s)
 
-	// Close the struct.
-	b.WriteString("}\n")
-
-	return b.String()
+	return s, err
 }

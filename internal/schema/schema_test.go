@@ -54,8 +54,11 @@ func TestGenerate(t *testing.T) {
 		Required: []string{"id", "name"},
 	}
 
-	generator := JSONSchemaToSwiftCodeGenerator{Schema: schema}
-	swiftCode := generator.Generate()
+	g := JSONSchemaToSwiftCodeGenerator{Schema: schema}
+	c, err := g.Generate()
+	if err != nil {
+		t.Errorf("Generate() error = %v", err)
+	}
 
 	expectedProperties := []string{
 		"let Id: Int",
@@ -66,9 +69,9 @@ func TestGenerate(t *testing.T) {
 	}
 
 	// Check if all expected properties are present in the generated code.
-	for _, property := range expectedProperties {
-		if !strings.Contains(swiftCode, property) {
-			t.Errorf("Generated code is missing property: %s\n\nGenerated code:\n\n%s", property, swiftCode)
+	for _, p := range expectedProperties {
+		if !strings.Contains(c, p) {
+			t.Errorf("Generated code is missing property: %s\n\nGenerated code:\n\n%s", p, c)
 		}
 	}
 }

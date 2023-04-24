@@ -15,13 +15,17 @@
 package driver
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/kevherro/swiftgen/internal/flags"
+	"github.com/kevherro/swiftgen/internal/testutil"
 )
 
-func TestGenerate(t *testing.T) {
+func TestGenerateFromJSONSchema(t *testing.T) {
 	f, err := os.CreateTemp(os.TempDir(), "schema.json")
 	if err != nil {
 		t.Errorf("CreateTemp(%v, %v) error = %v", os.TempDir(), "schema.json", err)
@@ -44,12 +48,11 @@ func TestGenerate(t *testing.T) {
 
 	// Call Generate with the temporary file paths.
 	dest := filepath.Dir(f.Name()) + "/" + "Schema.swift"
-	oldArgs := os.Args
-	defer func() {
-		os.Args = oldArgs
-	}()
-	os.Args = []string{"cmd", "--src", f.Name(), "--dest", dest}
-	if err := SwiftGen(); err != nil {
+	cmdFlags := &flags.CmdFlags{
+		Src:  f.Name(),
+		Dest: dest,
+	}
+	if err := SwiftGen(cmdFlags); err != nil {
 		t.Errorf("Generate() error = %v", err)
 	}
 	defer os.Remove(dest) // clean up
@@ -63,6 +66,74 @@ func TestGenerate(t *testing.T) {
 	expectedProperties := []string{
 		"let Name: String?",
 		"let Age: Double?",
+	}
+
+	// Check if all expected properties are present in the generated code.
+	for _, property := range expectedProperties {
+		if !strings.Contains(string(generatedCode), property) {
+			t.Errorf("Generated code is missing property: %s\n\nGenerated code:\n\n%s", property, generatedCode)
+		}
+	}
+}
+
+// TestGenerateFromJSONSchemaWithRefs tests schemas that are referenced in one
+// file and exists in another file.
+func TestGenerateFromJSONSchemaWithRefs(t *testing.T) {
+	f2, cleanup2 := testutil.CreateTempTestFile(t, "bar_", ".json")
+	blob := `{
+		"title": "Address",
+		"type": "object",
+		"properties": {
+			"street": { "type": "string" },
+			"city": { "type": "number" },
+			"country": { "type": "string" }
+		},
+		"required": ["street", "city", "country"]
+	}`
+	if _, err := f2.Write([]byte(blob)); err != nil {
+		t.Cleanup(cleanup2)
+		t.Errorf("f.Write() error = %v", err)
+	}
+	defer t.Cleanup(cleanup2)
+
+	f1, cleanup1 := testutil.CreateTempTestFile(t, "foo_", ".json")
+	blob = fmt.Sprintf(`{
+		"title": "Foo",
+		"type": "object",
+		"properties": {
+			"name": { "type": "string" },
+			"age": { "type": "number" },
+			"address": { "$ref": "%s" }
+		},
+		"required": ["name", "age", "address"]
+	}`, f2.Name())
+	if _, err := f1.Write([]byte(blob)); err != nil {
+		t.Cleanup(cleanup1)
+		t.Errorf("f.Write() error = %v", err)
+	}
+	defer t.Cleanup(cleanup1)
+
+	// Call Generate with the temporary file paths.
+	dest := filepath.Dir(f1.Name()) + "/" + "Schema.swift"
+	cmdFlags := &flags.CmdFlags{
+		Src:  f1.Name(),
+		Dest: dest,
+	}
+	if err := SwiftGen(cmdFlags); err != nil {
+		t.Errorf("Generate() error = %v", err)
+	}
+	defer os.Remove(dest) // clean up
+
+	// Read the output file and check if it contains the generated code.
+	generatedCode, err := os.ReadFile(dest)
+	if err != nil {
+		t.Errorf("ReadFile(%v) error = %v", dest, err)
+	}
+
+	expectedProperties := []string{
+		"let Name: String",
+		"let Age: Double",
+		"let Address: Address",
 	}
 
 	// Check if all expected properties are present in the generated code.

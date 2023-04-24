@@ -5,7 +5,7 @@
 # Introduction
 
 Are you over feeling the pain of manually updating your Swift models
-after you find out (the hard way) that your dependency's API changed?
+after finding out (the hard way) that your dependency's JSON schema changed?
 
 swiftgen is a code generation tool for Swift that can help alleviate this pain
 point by automatically generating models based on a specified schema or structure.
@@ -28,13 +28,13 @@ The binary will be installed in `$GOPATH/bin` (`$HOME/go/bin` by default).
 
 # Basic usage
 
-swiftgen can read a JSON schema file and convert it to Swift struct definitions.
+swiftgen can read a JSON schema file and convert it to Swift structs.
 
 ### Generate Swift code based on a JSON schema file
 
 ```
-% swiftgen --src <json_schema_file> --dest [result_write_location]
+% swiftgen --src <json_schema_file> --dest <swift_file>
 Where
     json_schema_file: Path to the JSON schema file. Required.
-    result_write_location: Path to the write location. Optional.
+    swift_file: Path to the destination Swift file. Required.
 ```

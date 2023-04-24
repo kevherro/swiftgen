@@ -17,30 +17,18 @@ package driver
 
 import (
 	"encoding/json"
-	"flag"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 
+	"github.com/kevherro/swiftgen/internal/flags"
 	"github.com/kevherro/swiftgen/internal/schema"
 )
 
 // SwiftGen converts JSON schema data located at src to Swift code and writes
 // it to dest.
-func SwiftGen() error {
-	srcFlag := flag.String("src", "", "Path to JSON schema file")
-	destFlag := flag.String("dest", "", "Path to write location")
-
-	flag.Parse()
-
-	if *srcFlag == "" {
-		flag.Usage()
-		err := fmt.Errorf("driver: --src flag value not provided")
-		return err
-	}
-
-	src, err := os.Open(*srcFlag)
+func SwiftGen(cmdFlags *flags.CmdFlags) error {
+	src, err := os.Open(cmdFlags.Src)
 	if err != nil {
 		return err
 	}
@@ -56,13 +44,16 @@ func SwiftGen() error {
 		return err
 	}
 
-	if err = os.MkdirAll(filepath.Dir(*destFlag), 0750); err != nil {
+	if err = os.MkdirAll(filepath.Dir(cmdFlags.Dest), 0750); err != nil {
 		return err
 	}
 
 	g := schema.JSONSchemaToSwiftCodeGenerator{Schema: s}
-	c := g.Generate()
-	if err = os.WriteFile(*destFlag, []byte(c), 0666); err != nil {
+	c, err := g.Generate()
+	if err != nil {
+		return err
+	}
+	if err = os.WriteFile(cmdFlags.Dest, []byte(c), 0666); err != nil {
 		return err
 	}
 

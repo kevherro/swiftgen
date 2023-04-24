@@ -15,10 +15,20 @@
 // Package driver provides an external entrypoint to the swiftgen driver.
 package driver
 
-import internalDriver "github.com/kevherro/swiftgen/internal/driver"
+import (
+	internalDriver "github.com/kevherro/swiftgen/internal/driver"
+	"github.com/kevherro/swiftgen/internal/flags"
+)
 
 // SwiftGen converts JSON schema data located at src to Swift code and writes
 // it to dest.
 func SwiftGen() error {
-	return internalDriver.SwiftGen()
+	cmdFlags := &flags.CmdFlags{}
+	cmdFlags.Parse()
+
+	if err := cmdFlags.Validate(); err != nil {
+		return err
+	}
+
+	return internalDriver.SwiftGen(cmdFlags)
 }
