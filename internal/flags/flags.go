@@ -30,9 +30,11 @@ func (cf *CmdFlags) Parse() {
 	flag.StringVar(&cf.Src, "src", "", "Path to the JSON schema file")
 	flag.StringVar(&cf.Dest, "dest", "", "Path to the destination Swift file")
 
+	flag.Parse()
+
 	if cf.Src == "" || cf.Dest == "" {
 		flag.Usage()
-		panic("both --src and --dest flags are required")
+		panic("both -src and -dest flags are required")
 	}
 }
 
