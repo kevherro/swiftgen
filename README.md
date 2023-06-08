@@ -38,3 +38,7 @@ Where
     json_schema_file: Path to the JSON schema file. Required.
     swift_file: Path to the destination Swift file. Required.
 ```
+
+---
+
+swiftgen project structure is heavily influenced by [pprof](https://github.com/google/pprof). Thanks y'all!
