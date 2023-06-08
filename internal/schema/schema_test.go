@@ -21,21 +21,22 @@ import (
 
 func TestSwiftType(t *testing.T) {
 	tests := []struct {
-		jsonType string
-		expected string
+		jsonProperty JSONSchemaProperty
+		expected     string
 	}{
-		{"string", "String"},
-		{"integer", "Int"},
-		{"number", "Double"},
-		{"boolean", "Bool"},
-		{"array", "[String]"},
-		{"unknown", "Any"},
+		{JSONSchemaProperty{Type: "string"}, "String"},
+		{JSONSchemaProperty{Type: "integer"}, "Int"},
+		{JSONSchemaProperty{Type: "number"}, "Double"},
+		{JSONSchemaProperty{Type: "boolean"}, "Bool"},
+		{JSONSchemaProperty{Type: "array", Items: &JSONSchemaProperty{Type: "string"}}, "[String]"},
+		{JSONSchemaProperty{Type: "array", Items: &JSONSchemaProperty{Type: "array", Items: &JSONSchemaProperty{Type: "integer"}}}, "[[Int]]"},
+		{JSONSchemaProperty{Type: "unknown"}, "Any"},
 	}
 
 	for _, test := range tests {
-		result := swiftType(test.jsonType)
+		result := swiftType(test.jsonProperty)
 		if result != test.expected {
-			t.Errorf("swiftType(%s) = %s; want %s", test.jsonType, result, test.expected)
+			t.Errorf("swiftType(%v) = %s; want %s", test.jsonProperty, result, test.expected)
 		}
 	}
 }

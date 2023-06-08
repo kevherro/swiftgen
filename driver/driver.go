@@ -20,8 +20,8 @@ import (
 	"github.com/kevherro/swiftgen/internal/flags"
 )
 
-// SwiftGen converts JSON schema data located at src to Swift code and writes
-// it to dest.
+// SwiftGen converts JSON schema data located at src
+// to Swift code and writes it to dest.
 func SwiftGen() error {
 	cmdFlags := &flags.CmdFlags{}
 	cmdFlags.Parse()

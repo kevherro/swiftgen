@@ -34,12 +34,12 @@ func TestGenerateFromJSONSchema(t *testing.T) {
 
 	blob := `{
 		"title": "Root",
-        "type": "object",
-        "properties": {
-            "name": { "type": "string" },
-            "age": { "type": "number" }
-        }
-    }`
+		"type": "object",
+		"properties": {
+			"name": { "type": "string" },
+			"age": { "type": "number" }
+		}
+	}`
 	if _, err := f.Write([]byte(blob)); err != nil {
 		f.Close()
 		t.Errorf("f.Write() error = %v", err)
@@ -140,6 +140,87 @@ func TestGenerateFromJSONSchemaWithRefs(t *testing.T) {
 	for _, property := range expectedProperties {
 		if !strings.Contains(string(generatedCode), property) {
 			t.Errorf("Generated code is missing property: %s\n\nGenerated code:\n\n%s", property, generatedCode)
+		}
+	}
+}
+
+func TestSwiftGen(t *testing.T) {
+	// Write a test JSON schema to a temp file.
+	f, err := os.CreateTemp(os.TempDir(), "schema.json")
+	if err != nil {
+		t.Errorf("CreateTemp(%v, %v) error = %v", os.TempDir(), "schema.json", err)
+	}
+	defer os.Remove(f.Name())
+
+	blob := `{
+		"title": "Person",
+		"type": "object",
+		"properties": {
+			"name": { "type": "string" },
+			"age": { "type": "number" },
+			"address": { "$ref": "#/definitions/Address" },
+			"hobbies": {
+				"type": "array",
+				"items": { "type": "string" }
+			}
+		},
+		"required": ["name", "age", "address", "hobbies"],
+		"definitions": {
+			"Address": {
+				"title": "Address",
+				"type": "object",
+				"properties": {
+					"street": { "type": "string" },
+					"city": { "type": "string" }
+				},
+				"required": ["street", "city"]
+			}
+		}
+	}`
+	if _, err := f.Write([]byte(blob)); err != nil {
+		f.Close()
+		t.Errorf("f.Write() error = %v", err)
+	}
+	defer f.Close()
+
+	// Call SwiftGen with the temp file's directory
+	// as the root directory.
+	cmdFlags := &flags.CmdFlags{
+		Src:  f.Name(),
+		Dest: filepath.Join(os.TempDir(), "Person.swift"),
+	}
+	err = SwiftGen(cmdFlags)
+	if err != nil {
+		t.Errorf("SwiftGen() error = %v", err)
+	}
+
+	// Read the generated Swift file and verify that
+	// it contains the expected code.
+	generatedCode, err := os.ReadFile(cmdFlags.Dest)
+	if err != nil {
+		t.Errorf("ReadFile(%v) error = %v", cmdFlags.Dest, err)
+	}
+
+	// Delete the generated swift file after the test.
+	defer os.Remove(cmdFlags.Dest)
+
+	expectedProperties := []string{
+		"struct Person: Codable {",
+		"let Name: String?",
+		"let Age: Double?",
+		"struct Address: Codable {",
+		"let Street: String?",
+		"let City: String?",
+		"}",
+		"let Address: Address",
+		"let Hobbies: [String]?",
+		"}",
+	}
+
+	// Check if all expected properties are present in the generated code.
+	for _, property := range expectedProperties {
+		if !strings.Contains(string(generatedCode), property) {
+			t.Errorf("Generated code is missing property: %s\n\nGenerated code:\n\n%s", property, string(generatedCode))
 		}
 	}
 }

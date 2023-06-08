@@ -27,17 +27,19 @@ import (
 )
 
 type JSONSchemaProperty struct {
-	Type    string `json:"type"`
-	Format  string `json:"format,omitempty"`
-	Default string `json:"default,omitempty"`
-	Ref     string `json:"$ref,omitempty"`
+	Type    string              `json:"type"`
+	Format  string              `json:"format,omitempty"`
+	Default string              `json:"default,omitempty"`
+	Ref     string              `json:"$ref,omitempty"`
+	Items   *JSONSchemaProperty `json:"items"`
 }
 
 type JSONSchema struct {
-	Title      string                        `json:"title"`
-	Type       string                        `json:"type"`
-	Properties map[string]JSONSchemaProperty `json:"properties"`
-	Required   []string                      `json:"required"`
+	Title       string                        `json:"title"`
+	Type        string                        `json:"type"`
+	Properties  map[string]JSONSchemaProperty `json:"properties"`
+	Required    []string                      `json:"required"`
+	Definitions map[string]JSONSchema         `json:"definitions"`
 }
 
 type JSONSchemaToSwiftCodeGenerator struct {
@@ -54,15 +56,51 @@ func (g *JSONSchemaToSwiftCodeGenerator) Generate() (string, error) {
 	return b.String(), nil
 }
 
+// generate does not support anonymous structs and complex $ref URIs,
+// including network URIs or URIs pointing to a location in an external file.
 func (g *JSONSchemaToSwiftCodeGenerator) generate(s JSONSchema, b *strings.Builder) error {
 	// Open the struct.
 	b.WriteString(fmt.Sprintf("struct %s: Codable {\n", s.Title))
 
-	// Generate properties without $ref.
+	// Generate properties.
 	for n, p := range s.Properties {
-		if p.Ref == "" {
+		if p.Ref != "" {
+			if strings.HasPrefix(p.Ref, "#") {
+				// The schema for p is referenced in the
+				// definitions of the same file.
+				definitionKey := strings.TrimPrefix(p.Ref, "#/definitions/")
+				definedSchema, exists := s.Definitions[definitionKey]
+				if !exists {
+					return fmt.Errorf("unable to find definition for $ref: %s", p.Ref)
+				}
+
+				// Recursively generate the defined schema.
+				err := g.generate(definedSchema, b)
+				if err != nil {
+					return err
+				}
+
+				name := convertToPascalCase(n)
+				b.WriteString(fmt.Sprintf("\tlet %s: %s\n", name, definedSchema.Title))
+			} else {
+				// The schema for p is located in an
+				// external file referenced by p.Ref.
+				s, err := loadJSONSchemaFromFile(p.Ref)
+				if err != nil {
+					return err
+				}
+
+				err = g.generate(s, b)
+				if err != nil {
+					return err
+				}
+
+				name := convertToPascalCase(n)
+				b.WriteString(fmt.Sprintf("\tlet %s: %s\n", name, s.Title))
+			}
+		} else {
 			name := convertToPascalCase(n)
-			t := swiftType(p.Type)
+			t := swiftType(p)
 
 			req := false
 			for _, rp := range s.Required {
@@ -77,25 +115,6 @@ func (g *JSONSchemaToSwiftCodeGenerator) generate(s JSONSchema, b *strings.Build
 			} else {
 				b.WriteString(fmt.Sprintf("\tlet %s: %s?\n", name, t))
 			}
-		}
-	}
-
-	// Generate properties with $ref and their respective structs.
-	for n, p := range s.Properties {
-		if p.Ref != "" {
-			// The schema for p is located in file p.Ref.
-			s, err := loadJSONSchemaFromFile(p.Ref)
-			if err != nil {
-				return err
-			}
-
-			err = g.generate(s, b)
-			if err != nil {
-				return err
-			}
-
-			name := convertToPascalCase(n)
-			b.WriteString(fmt.Sprintf("\tlet %s: %s\n", name, s.Title))
 		}
 	}
 
@@ -121,8 +140,8 @@ func convertToPascalCase(in string) string {
 }
 
 // swiftType returns the Swift type for the jsonType.
-func swiftType(jsonType string) string {
-	switch jsonType {
+func swiftType(p JSONSchemaProperty) string {
+	switch p.Type {
 	case "string":
 		return "String"
 	case "integer":
@@ -132,15 +151,21 @@ func swiftType(jsonType string) string {
 	case "boolean":
 		return "Bool"
 	case "array":
-		// Assuming the array element type is known, e.g., String.
-		return "[String]" // TODO: don't assume this!
+		if p.Items != nil {
+			// Recursively handle the type of array items.
+			return "[" + swiftType(*p.Items) + "]"
+		} else {
+			// If the type of the array items is not specified,
+			// fall back to Any.
+			return "[Any]"
+		}
 	default:
 		return "Any"
 	}
 }
 
-// loadJSONSchemaFromFile loads JSON schema data from name. In case of an error,
-// an empty JSONSchema is returned.
+// loadJSONSchemaFromFile loads JSON schema data from name.
+// In case of an error, an empty JSONSchema is returned.
 func loadJSONSchemaFromFile(name string) (JSONSchema, error) {
 	var s JSONSchema
 

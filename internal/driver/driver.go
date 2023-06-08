@@ -25,8 +25,8 @@ import (
 	"github.com/kevherro/swiftgen/internal/schema"
 )
 
-// SwiftGen converts JSON schema data located at src to Swift code and writes
-// it to dest.
+// SwiftGen converts JSON schema data located at src
+// to Swift code and writes it to dest.
 func SwiftGen(cmdFlags *flags.CmdFlags) error {
 	src, err := os.Open(cmdFlags.Src)
 	if err != nil {
