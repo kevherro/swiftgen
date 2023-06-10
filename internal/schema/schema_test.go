@@ -76,3 +76,36 @@ func TestGenerate(t *testing.T) {
 		}
 	}
 }
+
+func TestLoadJSONSchemaFromFile(t *testing.T) {
+	tests := []struct {
+		name    string
+		file    string
+		wantErr bool
+	}{
+		{
+			name:    "valid JSON schema",
+			file:    "testdata/valid.schema.json",
+			wantErr: false,
+		},
+		{
+			name:    "invalid JSON schema",
+			file:    "testdata/invalid.schema.json",
+			wantErr: true,
+		},
+		{
+			name:    "non-existent JSON schema",
+			file:    "testdata/non_existent.schema.json",
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := loadJSONSchemaFromFile(tt.file)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("loadJSONSchemaFromFile() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}

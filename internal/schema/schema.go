@@ -17,6 +17,7 @@ package schema
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -50,10 +51,7 @@ type JSONSchemaToSwiftCodeGenerator struct {
 func (g *JSONSchemaToSwiftCodeGenerator) Generate() (string, error) {
 	var b strings.Builder
 	err := g.generate(g.Schema, &b)
-	if err != nil {
-		return "", err
-	}
-	return b.String(), nil
+	return b.String(), err
 }
 
 // generate does not support anonymous structs and complex $ref URIs,
@@ -102,13 +100,7 @@ func (g *JSONSchemaToSwiftCodeGenerator) generate(s JSONSchema, b *strings.Build
 			name := convertToPascalCase(n)
 			t := swiftType(p)
 
-			req := false
-			for _, rp := range s.Required {
-				if rp == name {
-					req = true
-					break
-				}
-			}
+			req := contains(s.Required, name)
 
 			if req {
 				b.WriteString(fmt.Sprintf("\tlet %s: %s\n", name, t))
@@ -122,6 +114,16 @@ func (g *JSONSchemaToSwiftCodeGenerator) generate(s JSONSchema, b *strings.Build
 	b.WriteString("}\n")
 
 	return nil
+}
+
+// Contains checks if a string is present in a slice of strings.
+func contains(arr []string, str string) bool {
+	for _, a := range arr {
+		if a == str {
+			return true
+		}
+	}
+	return false
 }
 
 // convertToPascalCase converts an input string in snake_case or kebab-case
@@ -181,5 +183,16 @@ func loadJSONSchemaFromFile(name string) (JSONSchema, error) {
 	}
 	err = json.Unmarshal(b, &s)
 
-	return s, err
+	if err != nil {
+		return s, err
+	}
+
+	// Validate the schema.
+	for _, p := range s.Properties {
+		if p.Type == "" {
+			return s, errors.New("invalid schema: missing type in properties")
+		}
+	}
+
+	return s, nil
 }
