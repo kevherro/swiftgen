@@ -189,10 +189,22 @@ func loadJSONSchemaFromFile(name string) (JSONSchema, error) {
 
 	// Validate the schema.
 	for _, p := range s.Properties {
-		if p.Type == "" {
+		if !isValidRef(p) {
 			return s, errors.New("invalid schema: missing type in properties")
 		}
 	}
 
 	return s, nil
+}
+
+// isValidRef performs simple validation.
+func isValidRef(p JSONSchemaProperty) bool {
+	// A JSONSchemaProperty with a non-empty ref
+	// and an empty type is OK.
+	// The object that ref points to should specify
+	// its type.
+	if p.Ref != "" && p.Type == "" {
+		return true
+	}
+	return p.Type != ""
 }
